@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Camp Registration Form</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+    }
+    .form-container {
+      width: 400px;
+      margin: 0 auto;
+      padding: 20px;
+      border: 1px solid #ccc;
+      border-radius: 5px;
+    }
+    .form-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+    }
+    input[type="number"], input[type="text"] {
+      width: 100%;
+      padding: 8px;
+      box-sizing: border-box;
+    }
+    .total-fee {
+      font-weight: bold;
+      font-size: 1.2em;
+      margin-top: 10px;
+    }
+  </style>
+</head>
+<body>
+
+<div class="form-container">
+  <h2>Camp Registration Form</h2>
+  
+  <form id="registrationForm">
+    <div class="form-group">
+      <label for="parentName">Parent Name:</label>
+      <input type="text" id="parentName" name="parentName" required>
+    </div>
+    
+    <div class="form-group">
+      <label for="numKids">Number of Kids:</label>
+      <input type="number" id="numKids" name="numKids" min="1" max="10" required>
+    </div>
+    
+    <div class="total-fee" id="totalFee">Total Fee: RM 0</div>
+    
+    <div class="form-group">
+      <button type="submit">Submit</button>
+    </div>
+  </form>
+</div>
+
+<script>
+  // Get form and input elements
+  const numKidsInput = document.getElementById('numKids');
+  const totalFeeDiv = document.getElementById('totalFee');
+  const form = document.getElementById('registrationForm');
+  
+  // Define base prices
+  const firstKidFee = 200;
+  const discountFee = 170;
+  
+  // Function to calculate the total fee
+  function calculateFee() {
+    const numKids = parseInt(numKidsInput.value) || 0; // Convert to integer or 0 if empty
+    
+    if (numKids === 0) {
+      totalFeeDiv.textContent = 'Total Fee: RM 0';
+      return;
+    }
+    
+    let totalFee = 0;
+    
+    // Calculate for the first kid
+    if (numKids >= 1) {
+      totalFee += firstKidFee;
+    }
+    
+    // Calculate for additional kids (with discount)
+    if (numKids > 1) {
+      totalFee += (numKids - 1) * discountFee;
+    }
+    
+    // Update the total fee on the form
+    totalFeeDiv.textContent = 'Total Fee: RM ' + totalFee;
+  }
+  
+  // Add event listener to update fee whenever the number of kids changes
+  numKidsInput.addEventListener('input', calculateFee);
+  
+  // Form submit event to send data to Google Sheets
+  form.addEventListener('submit', function(event) {
+    event.preventDefault(); // Prevent the form from submitting
+    
+    const parentName = document.getElementById('parentName').value;
+    const numKids = document.getElementById('numKids').value;
+    const totalFee = totalFeeDiv.textContent.replace('Total Fee: RM ', '');
+    
+    // Send the form data to Google Sheets via the Apps Script Web App
+    fetch('https://script.google.com/macros/s/AKfycbzRvgkUSgrg3qVRudWVh-v_EH3CMBysazxmYIdjTtvVTDc0K50FEUGipz16leJWgtPZ/exec', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: new URLSearchParams({
+        'parentName': parentName,
+        'numKids': numKids,
+        'totalFee': totalFee
+      })
+    })
+    .then(response => response.json())
+    .then(data => {
+      if (data.status === 'success') {
+        alert('Form submitted successfully!');
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    })
+    .catch(error => {
+      console.error('Error:', error);
+      alert('Failed to submit form');
+    });
+  });
+</script>
+
+</body>
+</html>
